@@ -52,6 +52,7 @@ def chat():
     data = request.json
     user_input = data.get("message", "").strip()
     model_choice = data.get("model", "chatgpt").strip().lower()
+    alert("This is an alert message!"+model_choice);
 
     if not user_input:
         return jsonify({"response": "Please enter a message."})
