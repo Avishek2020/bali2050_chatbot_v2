@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Bad Lippspringe - Professional Chatbot</title>
     
+    <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Google Fonts for clean typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -48,8 +50,10 @@
 </head>
 <body class="flex items-center justify-center min-h-screen p-0 sm:p-4">
 
+    <!-- Main chat container with a larger max-width and fixed height on desktop -->
     <div id="chatbox" class="w-full h-full sm:w-full sm:max-w-7xl sm:h-[90vh] bg-white sm:rounded-2xl shadow-2xl flex flex-col p-4 sm:p-8">
 
+        <!-- Header section with larger fonts and icon -->
         <header class="flex items-center gap-4 pb-6 border-b border-gray-200">
             <img src="https://raw.githubusercontent.com/Avishek2020/bali2050_chatbot/refs/heads/main/images/dbl_logo.png" alt="Logo" class="w-14 h-14 sm:w-16 sm:h-16 object-contain" onerror="this.onerror=null;this.src='https://placehold.co/64x64/DBEAFE/3B82F6?text=Logo';">
             <div>
@@ -58,13 +62,15 @@
             </div>
         </header>
 
+        <!-- Messages container with more padding -->
         <div id="messages" class="flex-1 overflow-y-auto py-8 px-4 sm:px-6 space-y-8">
+            <!-- Example Bot Message with larger text and avatar -->
             <div class="flex items-end gap-4">
                 <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
                 </div>
                 <div class="bg-gray-100 text-gray-800 p-4 rounded-lg rounded-bl-none shadow-sm max-w-[85%] sm:max-w-md relative group">
-                    <p class="text-base">Hallo! Wie kann ich Ihnen heute helfen? Wählen Sie ein Modell und klicken Sie auf das Benutzersymbol, um Ihr Bild hochzuladen.</p>
+                    <p class="text-base">Hallo! Wie kann ich Ihnen heute helfen? Klicken Sie auf das Benutzersymbol, um Ihr Bild hochzuladen.</p>
                      <button class="speak-button absolute top-2 right-2 p-1 bg-white rounded-full text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="speakText('Hallo! Wie kann ich Ihnen heute helfen? Klicken Sie auf das Benutzersymbol, um Ihr Bild hochzuladen.')">
                          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clip-rule="evenodd"></path></svg>
                      </button>
@@ -72,6 +78,7 @@
             </div>
         </div>
         
+        <!-- Typing indicator (hidden by default) -->
         <div id="typing-indicator" class="hidden flex items-end gap-4 px-4 sm:px-6 pb-4">
              <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
@@ -83,18 +90,8 @@
              </div>
         </div>
 
+        <!-- Input area with larger text and buttons -->
         <div class="pt-6 border-t border-gray-200">
-            <div class="flex justify-center items-center gap-6 mb-4">
-                <label class="flex items-center gap-2 cursor-pointer text-gray-600 hover:text-blue-600 transition-colors">
-                    <input type="radio" name="model" value="gemini" class="form-radio text-blue-500 focus:ring-blue-500">
-                    <span>Gemini</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer text-gray-600 hover:text-blue-600 transition-colors">
-                    <input type="radio" name="model" value="chatgpt" checked class="form-radio text-pink-500 focus:ring-pink-500">
-                    <span>ChatGPT</span>
-                </label>
-            </div>
-
             <div class="flex items-center bg-gray-100 rounded-xl p-3">
                 <input id="userInput" type="text" placeholder="Stellen Sie Ihre Frage..." class="flex-1 bg-transparent border-none text-gray-800 placeholder-gray-500 focus:ring-0 text-base px-4"/>
                 <button id="micBtn" class="p-3 text-gray-500 hover:text-blue-600 transition-colors rounded-lg">
@@ -107,6 +104,7 @@
         </div>
     </div>
     
+    <!-- Hidden file input for icon upload -->
     <input type="file" id="iconUpload" class="hidden" accept="image/*">
 
     <script>
@@ -224,20 +222,15 @@
             const userMsg = userInput.value.trim();
             if (!userMsg) return;
 
-            const selectedModel = document.querySelector('input[name="model"]:checked').value;
-
             appendMessage('user', userMsg);
             userInput.value = "";
             typingIndicator.classList.remove('hidden');
 
             try {
-                const response = await fetch("https://bali2050-chatbot-v2.onrender.com/chat", {
+                const response = await fetch("https://bali2050-chatbot.onrender.com/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        message: userMsg,
-                        model: selectedModel 
-                    })
+                    body: JSON.stringify({ message: userMsg })
                 });
 
                 if (!response.ok) {
