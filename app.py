@@ -15,6 +15,7 @@ SYSTEM_PROMPT = (
     "You are a helpful assistant that ONLY strict instructions answers questions related to Bad Lippspringe, Germany — "
     "including local services, events, weather, transportation, and local history.\n"
     "If a user asks something unrelated (e.g., about another city of Germany or Deutschland), DO NOT answer.\n"
+    "do not not show unwanted stars ** and formate output \n"
 )
 
 # Fallback message by language
