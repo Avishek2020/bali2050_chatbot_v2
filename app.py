@@ -1,26 +1,24 @@
 import os
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from openai import OpenAI
 import google.generativeai as genai
 from langdetect import detect
 
-# --- API Key Configuration ---
-# It's recommended to use a more secure way to manage the app's secret key in production
-app.secret_key = os.urandom(24) 
-
 # --- Client Initialization ---
 # Initialize OpenAI client
+# Your key should be set as an environment variable: OPENAI_API_KEY
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Configure and initialize Google Gemini client
+# Your key should be set as an environment variable: GEMINI_API_KEY
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
 app = Flask(__name__)
-# Allow credentials to handle session cookies
-CORS(app, supports_credentials=True)
+# Enable Cross-Origin Resource Sharing
+CORS(app)
 
 # --- Prompts and Constants ---
 # System prompt that enforces topic and tagging for both models
@@ -64,39 +62,31 @@ def chat():
     except:
         detected_lang = DEFAULT_LANGUAGE
 
-    # Get or initialize conversation history from the session
-    if 'history' not in session or not isinstance(session['history'], dict):
-        session['history'] = {'chatgpt': [], 'gemini': []}
-        
-    # Append user message to the correct history
-    session['history'][model_choice].append({"role": "user", "content": user_input})
-    session.modified = True
-    
     try:
+        reply = ""
         if model_choice == "gemini":
             if not GEMINI_API_KEY:
-                 return jsonify({"response": "Gemini API key is not configured."}), 500
+                 return jsonify({"response": "Gemini API key is not configured on the server."}), 500
             
             model = genai.GenerativeModel('gemini-pro')
-            # Format history for Gemini
-            gemini_history = [
-                {"role": "user", "parts": [SYSTEM_PROMPT_CONTENT]},
-                {"role": "model", "parts": ["Understood. I will only answer questions about Bad Lippspringe."]}
-            ] + [{"role": entry["role"], "parts": [entry["content"]]} for entry in session['history']['gemini']]
-
-            response = model.generate_content(gemini_history)
+            # For a stateless call, we combine the system prompt and user input
+            full_prompt = f"{SYSTEM_PROMPT_CONTENT}\n\nUser Question: {user_input}"
+            response = model.generate_content(full_prompt)
             reply = response.text.strip()
 
         else: # Default to ChatGPT
             if not openai_client.api_key:
-                 return jsonify({"response": "OpenAI API key is not configured."}), 500
+                 return jsonify({"response": "OpenAI API key is not configured on the server."}), 500
                  
-            # Format history for OpenAI
-            chatgpt_history = [{"role": "system", "content": SYSTEM_PROMPT_CONTENT}] + session['history']['chatgpt']
+            # For a stateless call, the message list contains the system role and the user role
+            messages = [
+                {"role": "system", "content": SYSTEM_PROMPT_CONTENT},
+                {"role": "user", "content": user_input}
+            ]
 
             response = openai_client.chat.completions.create(
                 model="gpt-4o",
-                messages=chatgpt_history,
+                messages=messages,
                 max_tokens=1000,
                 temperature=0.7
             )
@@ -107,16 +97,14 @@ def chat():
             localized_msg = FALLBACK_MESSAGES.get(detected_lang[:2], FALLBACK_MESSAGES[DEFAULT_LANGUAGE])
             return jsonify({"response": localized_msg})
 
-        # Append assistant response to the correct history
-        session['history'][model_choice].append({"role": "assistant", "content": reply})
-        session.modified = True
-
         return jsonify({"response": reply})
 
     except Exception as e:
-        # Log the full error for debugging
-        print(f"An error occurred with model {model_choice}: {str(e)}")
-        return jsonify({"response": f"An error occurred while processing your request. Please try again later."}), 500
+        # Log the full error for debugging on the server
+        print(f"An error occurred with model '{model_choice}': {str(e)}")
+        # Return a generic error message to the user
+        return jsonify({"response": "An error occurred while processing your request. Please try again later."}), 500
 
 if __name__ == "__main__":
+    # The development server will run on http://localhost:5000
     app.run(host="0.0.0.0", port=5000)
