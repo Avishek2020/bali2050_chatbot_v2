@@ -5,7 +5,7 @@ from google import genai
 import os
 
 # Configure Gemini client
-client = genai.Client(api_key="GEMINI_API_KEY")
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
