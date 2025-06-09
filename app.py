@@ -9,8 +9,7 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel("gemini-1.5-pro")
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
-app.secret_key = os.getenv("FLASK_SECRET", "your-secret-key")  # Needed for session
+CORS(app, supports_credentials=True) 
 
 # System prompt
 SYSTEM_PROMPT = (
