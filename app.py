@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from langdetect import detect
 from google import genai
 import os
 
@@ -11,33 +10,25 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-# Strict system rules
+# Updated System Prompt without __OUT_OF_SCOPE__ and with verified URLs
 SYSTEM_PROMPT = (
-    "You are a helpful assistant that ONLY answers questions related to Bad Lippspringe, Germany — "
-    "including local services, events, weather, transportation, and local history.\n"
-    "Strictly follow these rules:\n"
-    "✅ Only provide VERIFIED and current information.\n"
-    "❌ Never guess, assume, or infer details.\n"
-    "⛔ Do NOT respond to unrelated topics — just reply with: __OUT_OF_SCOPE__.\n"
-    "\n"
-    "⚠️ Important formatting rules:\n"
-    "- Do NOT use markdown formatting (no **bold**, *italic*, headers, or bullet symbols).\n"
+    "You are a helpful assistant who provides accurate, current, and verified information about Bad Lippspringe, Germany. "
+    "You may include local services, events, transportation, weather, healthcare, history, and culture.\n\n"
+    "Use ONLY the following sources to inform your answers when relevant:\n"
+    "- https://www.bad-lippspringe.de\n"
+    "- https://www.vitalpina.de\n"
+    "- https://www.teutoburgerwald.de\n"
+    "- https://www.kurpark-badlippspringe.de\n"
+    "- https://de.wikipedia.org/wiki/Bad_Lippspringe\n\n"
+    "Never hallucinate or invent facts not found or inferable from the above sources.\n\n"
+    "Formatting rules:\n"
+    "- Do NOT use markdown formatting (no bold, italic, headers, or bullet symbols).\n"
     "- Use plain text only. Write clear, clean sentences.\n"
-    "- Structure responses with clear sections using titles like 'Sports', 'Culture', etc., but without symbols or styling.\n"
-    "\n"
+    "- Structure responses using clear section titles like 'Sports', 'Culture', 'Healthcare' — but without styling.\n\n"
     "Example:\n"
-    "Sports:\nWalking in the Teutoburg Forest...\nCulture:\nVisit the Arminiuspark...\n"
+    "Sports:\nHiking trails are available in the Teutoburg Forest starting near Kurwald Park.\n"
+    "Culture:\nArminiuspark offers concerts and seasonal festivals throughout the year.\n"
 )
-
-# Language-based fallback messages
-FALLBACK_MESSAGES = {
-    "en": "I'm really sorry, but I'm designed to assist only with information about Bad Lippspringe...",
-    "de": "Es tut mir leid, aber ich bin darauf spezialisiert, nur Informationen über Bad Lippspringe bereitzustellen...",
-    "pt": "Desculpe, mas fui projetado para fornecer informações apenas sobre Bad Lippspringe...",
-    "es": "Lo siento mucho, pero estoy diseñado para proporcionar información solo sobre Bad Lippspringe...",
-    "tr": "Üzgünüm, ancak yalnızca Bad Lippspringe hakkında bilgi sağlamak üzere tasarlandım...",
-}
-DEFAULT_LANGUAGE = "en"
 
 @app.route("/chat", methods=["POST", "OPTIONS"])
 def chat():
@@ -49,12 +40,7 @@ def chat():
         return jsonify({"response": "Please enter a message."})
 
     try:
-        detected_lang = detect(user_input)
-    except:
-        detected_lang = DEFAULT_LANGUAGE
-
-    try:
-        # Compose chat session with system and user message
+        # Send chat session to Gemini with updated system prompt
         chat = model.start_chat(history=[
             {"role": "system", "parts": [SYSTEM_PROMPT]},
             {"role": "user", "parts": [user_input]}
@@ -62,11 +48,6 @@ def chat():
 
         response = chat.send_message(user_input)
         reply = response.text.strip()
-
-        # Check if model obeyed scope restriction
-        if "__OUT_OF_SCOPE__" in reply or reply.lower().startswith("i’m sorry") or "not related to bad lippspringe" in reply.lower():
-            fallback = FALLBACK_MESSAGES.get(detected_lang[:2], FALLBACK_MESSAGES[DEFAULT_LANGUAGE])
-            return jsonify({"response": fallback})
 
         return jsonify({"response": reply})
 
