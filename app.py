@@ -10,9 +10,6 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-# !!! IMPORTANT: Flask sessions require a secret key for security !!!
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "a_very_secret_key_that_you_should_change") # Change this in production
-
 SYSTEM_PROMPT = """
 You are "Bad Lippspringe Guide," a specialized, highly precise, and strictly factual city guide for Bad Lippspringe, Germany. Your primary objective is to provide tourists and visitors with accurate, verifiable, and helpful information about Bad Lippspringe.
 
