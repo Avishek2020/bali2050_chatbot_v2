@@ -4,13 +4,14 @@ from langdetect import detect
 from google import genai
 import os
 
-# Configure Gemini client
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# Initialize Gemini Client
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-# Strict system prompt
+# Strict system rules
 SYSTEM_PROMPT = (
     "You are a helpful assistant that ONLY answers questions related to Bad Lippspringe, Germany — "
     "including local services, events, weather, transportation, and local history.\n"
@@ -28,8 +29,7 @@ SYSTEM_PROMPT = (
     "Sports:\nWalking in the Teutoburg Forest...\nCulture:\nVisit the Arminiuspark...\n"
 )
 
-
-# Fallback message by language
+# Language-based fallback messages
 FALLBACK_MESSAGES = {
     "en": "I'm really sorry, but I'm designed to assist only with information about Bad Lippspringe...",
     "de": "Es tut mir leid, aber ich bin darauf spezialisiert, nur Informationen über Bad Lippspringe bereitzustellen...",
@@ -53,17 +53,18 @@ def chat():
     except:
         detected_lang = DEFAULT_LANGUAGE
 
-    # Final prompt: system rules + user input
-    full_prompt = SYSTEM_PROMPT + "\n\nUser: " + user_input
-
     try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=full_prompt
-        )
+        # Compose chat session with system and user message
+        chat = model.start_chat(history=[
+            {"role": "system", "parts": [SYSTEM_PROMPT]},
+            {"role": "user", "parts": [user_input]}
+        ])
+
+        response = chat.send_message(user_input)
         reply = response.text.strip()
 
-        if "__OUT_OF_SCOPE__" in reply:
+        # Check if model obeyed scope restriction
+        if "__OUT_OF_SCOPE__" in reply or reply.lower().startswith("i’m sorry") or "not related to bad lippspringe" in reply.lower():
             fallback = FALLBACK_MESSAGES.get(detected_lang[:2], FALLBACK_MESSAGES[DEFAULT_LANGUAGE])
             return jsonify({"response": fallback})
 
