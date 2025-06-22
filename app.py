@@ -1,20 +1,18 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session # Import session
 from flask_cors import CORS
 from google import generativeai as genai
 import os
 
 # Initialize Gemini Client
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-# Consider using "gemini-1.5-pro" for better adherence to complex instructions
-# model = genai.GenerativeModel("gemini-1.5-pro")
-model = genai.GenerativeModel("gemini-1.5-flash") # Keep flash for now to test the prompt
-
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-# Define the SYSTEM_PROMPT. Use f-strings for clarity if needed, but triple quotes are key.
-# Added a more direct instruction regarding the "plan" and the fallback.
+# !!! IMPORTANT: Flask sessions require a secret key for security !!!
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "a_very_secret_key_that_you_should_change") # Change this in production
+
 SYSTEM_PROMPT = """
 You are "Bad Lippspringe Guide," a specialized, highly precise, and strictly factual city guide for Bad Lippspringe, Germany. Your primary objective is to provide tourists and visitors with accurate, verifiable, and helpful information about Bad Lippspringe.
 
@@ -34,35 +32,48 @@ Most Important Internal Instruction: If you receive a query where you cannot pro
  
 @app.route("/chat", methods=["POST", "OPTIONS"])
 def chat():
-    if request.method == "OPTIONS":
-        return '', 204
+    if request.method == "OPTIONS":
+        return '', 204
 
-    user_input = request.json.get("message", "").strip()
-    if not user_input:
-        return jsonify({"response": "Please enter a message."})
+    user_input = request.json.get("message", "").strip()
+    if not user_input:
+        return jsonify({"response": "Please enter a message."})
 
-    try:
-        # Construct the initial history.
-        # It's crucial to set the context at the very beginning of the chat.
-        # The system prompt is given as a user role, followed by a model's acknowledgment
-        # to ensure the model "ingests" the persona and rules before the actual query.
-        initial_history = [
-            {"role": "user", "parts": [SYSTEM_PROMPT]},
-            {"role": "model", "parts": ["Understood. I am ready to provide factual information and assistance as the Bad Lippspringe Guide."]}
-        ]
+    try:
+        # Check if a conversation history already exists in the session
+        if 'chat_history' not in session:
+            # If not, initialize it with the system prompt and acknowledgment
+            session['chat_history'] = [
+                {"role": "user", "parts": [SYSTEM_PROMPT]},
+                {"role": "model", "parts": ["Understood. I am ready to provide factual information and assistance as the Bad Lippspringe Guide."]}
+            ]
 
-        chat_session = model.start_chat(history=initial_history)
+        # Get the current history from the session
+        current_history = session['chat_history']
+
+        # Start a chat session with the current history
+        # Gemini models re-ingest the entire history with each send_message call
+        # but this ensures the system prompt is only "added" to the session's stored history once.
+        chat_session = model.start_chat(history=current_history)
 
         # Send the actual user's message to the chat session
         response = chat_session.send_message(user_input)
         reply = response.text.strip()
 
+        # Append the user's message and the model's response to the history
+        # so it's available for the next request in the same session
+        session['chat_history'].append({"role": "user", "parts": [user_input]})
+        session['chat_history'].append({"role": "model", "parts": [reply]})
+
+        # You might want to limit the history length to avoid very large sessions
+        # For example, keep only the last N turns + the system prompt:
+        # session['chat_history'] = session['chat_history'][-20:] # Keep last 10 user/model turns
+
         return jsonify({"response": reply})
 
-    except Exception as e:
-        print(f"An error occurred: {e}") # This will print the error to your Flask console
-        return jsonify({"response": f"An error occurred: {str(e)}"}), 500
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return jsonify({"response": f"An error occurred: {str(e)}"}), 500
 
 if __name__ == "__main__":
-    # Run in debug mode for better error visibility during development
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
